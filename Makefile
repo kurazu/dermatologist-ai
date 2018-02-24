@@ -9,3 +9,6 @@ train512:
 
 train299:
 	venv/bin/python -m cancer.train 299 299
+
+augmentedtrain299:
+	venv/bin/python -m cancer.aug_train 299 299

@@ -49,8 +49,10 @@ def add_dense_segment(model, width, dropout_rate):
     model.add(dropout(dropout_rate))
 
 
-def get_weights_file_path(input_x, input_y):
-    return os.path.join(common.TOP, f'weights.best.{input_x}x{input_y}.hdf5')
+def get_weights_file_path(input_x, input_y, prefix):
+    return os.path.join(
+        common.TOP, f'weights.best.{prefix}.{input_x}x{input_y}.hdf5'
+    )
 
 
 def get_compiled_model(input_x, input_y, dropout_rate=0.0):
