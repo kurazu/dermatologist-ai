@@ -9,14 +9,12 @@ CLASSES = [
 
 HERE = os.path.dirname(__file__)
 TOP = os.path.join(HERE, '..')
-BOTTLENECK_FILE = os.path.join(TOP, 'bottleneck.hdf5')
-IMAGE_INPUT_SIZE = 512, 512
 
 
-def get_pretrained_model():
+def get_pretrained_model(input_x, input_y):
     pretrained_model = InceptionResNetV2(
         include_top=False, weights='imagenet',
-        input_shape=(*IMAGE_INPUT_SIZE, 3), pooling=None
+        input_shape=(input_x, input_y, 3), pooling=None
     )
     pretrained_model.summary()
     pretrained_model._make_predict_function()

@@ -1,14 +1,17 @@
-from keras.preprocessing import image
+import sys
 import os.path
 from glob import glob
-import h5py
-import numpy as np
-from tqdm import tqdm
 from multiprocessing import Pool
 import math
+import functools
+
+from keras.preprocessing import image
+import numpy as np
+from tqdm import tqdm
 
 from . import common
 from . import utils
+from . import storage
 
 
 DATA_DIR = os.path.join(common.TOP, 'data')
@@ -44,13 +47,15 @@ CLASS_MAPPING = {
 }
 
 
-def load_img_array(path):
-    img = image.load_img(path, target_size=common.IMAGE_INPUT_SIZE)
+def load_img_array(input_x, input_y, path):
+    img = image.load_img(path, target_size=(input_x, input_y))
     img_arr = image.img_to_array(img, data_format='channels_last')
     return img_arr
 
 
-def store_bottleneck_features(f, pretrained_model, name, dataset):
+def store_bottleneck_features(
+    f, pretrained_model, input_x, input_y, name, dataset
+):
     batch_size = 32
     workers = 8
     features_shape = (len(dataset), *pretrained_model.output_shape[1:])
@@ -62,13 +67,16 @@ def store_bottleneck_features(f, pretrained_model, name, dataset):
     )
     batches = utils.grouper(dataset, batch_size)
     total_batches = math.ceil(len(dataset) / batch_size)
+    load_img_array_callback = functools.partial(
+        load_img_array, input_x, input_y
+    )
     with Pool(workers) as pool:
         for batch_idx, batch in enumerate(tqdm(batches, total=total_batches)):
             start_idx = batch_idx * batch_size
             end_idx = start_idx + len(batch)
 
             filenames = [path for path, _ in batch]
-            img_arrays = pool.map(load_img_array, filenames)
+            img_arrays = pool.map(load_img_array_callback, filenames)
             img_tensors = np.stack(img_arrays)
             predictions = pretrained_model.predict(img_tensors)
             features_dset[start_idx:end_idx] = predictions
@@ -81,12 +89,15 @@ def store_bottleneck_features(f, pretrained_model, name, dataset):
 
 
 def main():
-    pretrained_model = common.get_pretrained_model()
+    input_x, input_y = map(int, sys.argv[1:])
+    pretrained_model = common.get_pretrained_model(input_x, input_y)
 
-    with h5py.File(common.BOTTLENECK_FILE, 'w') as f:
+    with storage.get_bottleneck_file(input_x, input_y, 'w') as f:
         for name, path in DATASETS:
             dataset = load_dataset(path)
-            store_bottleneck_features(f, pretrained_model, name, dataset)
+            store_bottleneck_features(
+                f, pretrained_model, input_x, input_y, name, dataset
+            )
 
 
 if __name__ == '__main__':
