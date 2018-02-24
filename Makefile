@@ -1,2 +1,2 @@
-train:
-	venv/bin/python train.py
+bottleneck:
+	venv/bin/python -m cancer.bottleneck
