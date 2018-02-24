@@ -66,7 +66,8 @@ def main():
         steps_per_epoch=TRAIN_SAMPLES // BATCH_SIZE,
         epochs=train.EPOCHS,
         validation_data=transformed_validation_generator,
-        validation_steps=VALIDATION_SAMPLES // BATCH_SIZE
+        validation_steps=VALIDATION_SAMPLES // BATCH_SIZE,
+        callbacks=callbacks
     )
 
 
